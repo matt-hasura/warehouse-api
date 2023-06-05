@@ -1,0 +1,101 @@
+DROP DATABASE IF EXISTS WAREHOUSE;
+CREATE DATABASE WAREHOUSE;
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."skus" (
+    "sku" NUMBER(38,0) NOT NULL,
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_skus" PRIMARY KEY ("sku")
+);
+
+CREATE OR REPLACE SEQUENCE "asset_id_seq"
+  START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."assets" (
+    "asset_id" NUMBER(38,0) NOT NULL DEFAULT WAREHOUSE.PUBLIC."asset_id_seq".NEXTVAL,
+    "sku" NUMBER(38,0) NOT NULL,
+    "url" VARCHAR(256) NOT NULL,
+    "tag" VARCHAR(128) NOT NULL,
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_assets" PRIMARY KEY ("asset_id"),
+    CONSTRAINT "fk_assets_sku" FOREIGN KEY ("sku") REFERENCES WAREHOUSE.PUBLIC."skus"("sku")
+);
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."descriptions" (
+    "sku" NUMBER(38,0) NOT NULL,
+    "name" VARCHAR(256) NOT NULL,
+    "summary" VARCHAR(4096) NOT NULL,
+    "brand" VARCHAR(256) NOT NULL,
+    "type" VARCHAR(128) NOT NULL,
+    "country" VARCHAR(128) NOT NULL,
+    "region" VARCHAR(128) NOT NULL,
+    "style" VARCHAR(128) NOT NULL,
+    "size" NUMBER(5,2) NOT NULL,
+    "units" VARCHAR(3) NOT NULL,
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_description" PRIMARY KEY ("sku"),
+    CONSTRAINT "fk_description_sku" FOREIGN KEY ("sku") REFERENCES WAREHOUSE.PUBLIC."skus"("sku")
+);
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."inventories" (
+    "store_id" NUMBER(38,0) NOT NULL,
+    "sku" NUMBER(38,0) NOT NULL,
+    "quantity" NUMBER(38,0) NOT NULL,
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_inventories" PRIMARY KEY ("store_id"),
+    CONSTRAINT "fk_inventories_sku" FOREIGN KEY ("sku") REFERENCES WAREHOUSE.PUBLIC."skus"("sku")
+);
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."stores" (
+    "store_id" NUMBER(38,0) NOT NULL,
+    "name" VARCHAR(128) NOT NULL,
+    "address" VARCHAR(64) NOT NULL,
+    "city" VARCHAR(64) NOT NULL,
+    "state" VARCHAR(2) NOT NULL,
+    "zip_code" NUMBER(5,0) NOT NULL,
+    "latitude" NUMBER(9,6) NOT NULL,
+    "longitude" NUMBER(9,6) NOT NULL,
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_stores" PRIMARY KEY ("store_id"),
+    CONSTRAINT "fk_stores_store_id" FOREIGN KEY ("store_id") REFERENCES WAREHOUSE.PUBLIC."inventories"("store_id")
+);
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."prices" (
+    "sku" NUMBER(38,0) NOT NULL,
+    "retail" NUMBER(8,2) NOT NULL,
+    "sale" NUMBER(8,2),
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_prices" PRIMARY KEY ("sku"),
+    CONSTRAINT "fk_prices_sku" FOREIGN KEY ("sku") REFERENCES WAREHOUSE.PUBLIC."skus"("sku")
+);
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."ratings" (
+    "sku" NUMBER(38,0) NOT NULL,
+    "score" NUMBER(2,1),
+    "count" NUMBER(38,0),
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_ratings" PRIMARY KEY ("sku"),
+    CONSTRAINT "fk_ratings_sku" FOREIGN KEY ("sku") REFERENCES WAREHOUSE.PUBLIC."skus"("sku")
+);
+
+CREATE OR REPLACE SEQUENCE "review_id_seq"
+  START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TABLE WAREHOUSE.PUBLIC."reviews" (
+    "review_id" NUMBER(38,0) NOT NULL DEFAULT WAREHOUSE.PUBLIC."review_id_seq".NEXTVAL,
+    "sku" NUMBER(38,0) NOT NULL,
+    "user_id" NUMBER(38,0),
+    "author" VARCHAR(256) NOT NULL,
+    "summary" VARCHAR(256),
+    "score" NUMBER(2,1),
+    "created" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    "updated" TIMESTAMP_NTZ(9) NOT NULL DEFAULT SYSDATE(),
+    CONSTRAINT "pk_reviews" PRIMARY KEY ("review_id"),
+    CONSTRAINT "fk_reviews_sku" FOREIGN KEY ("sku") REFERENCES WAREHOUSE.PUBLIC."ratings"("sku")
+);
